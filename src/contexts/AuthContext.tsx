@@ -17,6 +17,7 @@ interface AuthContextType {
   ) => Promise<{ error: string | null }>;
   logout: () => void;
   loading: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,10 +25,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
+    try {
+      const currentUser = authService.getCurrentUser();
+      setUser(currentUser);
+      setError(null);
+    } catch (err) {
+      console.error('Auth initialization error:', err);
+      setError('Erro ao inicializar autenticação');
+    }
     setLoading(false);
   }, []);
 
@@ -73,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, error }}>
       {children}
     </AuthContext.Provider>
   );

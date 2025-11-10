@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, initError } from './supabase';
 
 export interface User {
   id: string;
@@ -14,6 +14,10 @@ export interface AuthResponse {
 export const authService = {
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
+      if (!supabase || initError) {
+        return { user: null, error: 'Erro de conexão: ' + (initError || 'Supabase não inicializado') };
+      }
+
       const { data, error } = await supabase
         .from('users')
         .select('id, email, role, password_hash')
@@ -37,6 +41,7 @@ export const authService = {
 
       return { user: null, error: 'Credenciais inválidas' };
     } catch (error) {
+      console.error('Login error:', error);
       return { user: null, error: 'Erro ao fazer login' };
     }
   },
@@ -53,6 +58,10 @@ export const authService = {
     address: string
   ): Promise<AuthResponse> {
     try {
+      if (!supabase || initError) {
+        return { user: null, error: 'Erro de conexão: ' + (initError || 'Supabase não inicializado') };
+      }
+
       const { data: userData, error: userError } = await supabase
         .from('users')
         .insert([{ email, password_hash: password, role: 'client' }])
@@ -85,6 +94,7 @@ export const authService = {
       localStorage.setItem('currentUser', JSON.stringify(user));
       return { user, error: null };
     } catch (error) {
+      console.error('Register error:', error);
       return { user: null, error: 'Erro ao criar conta' };
     }
   },
